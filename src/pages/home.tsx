@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertVideoRequestSchema, RECITER_OPTIONS, SURAH_LIST } from "@shared/schema";
@@ -10,9 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { ProcessingState } from "@/components/ProcessingState";
-import { Sparkles, BookOpen, Video, Music } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Sparkles, BookOpen, Video, Music, AlertCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import {
+  validateVideoRequest,
+  getVideoErrorMessage,
+  estimateVideoProcessingTime,
+} from "@/lib/videoService";
 
 const formSchema = insertVideoRequestSchema.extend({
   surah: z.coerce.number().min(1).max(114),
@@ -29,34 +35,64 @@ export default function Home() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      surah: 1,
-      startAyah: 1,
-      endAyah: 7,
-      reciter: "Alafasy_128kbps",
-    },
+    defaultValues: formDefaults,
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
+      // Validate using the new video service
+      const validation = validateVideoRequest(data);
+      if (!validation.valid) {
+        // Show all validation errors
+        validation.errors.forEach((error) => {
+          toast({
+            variant: "destructive",
+            title: "خطأ في المدخلات",
+            description: error,
+          });
+        });
+        return;
+      }
+
+      // Estimate processing time
+      const estimatedTime = estimateVideoProcessingTime(
+        data.endAyah - data.startAyah + 1,
+      );
+
       const result = await generateMutation.mutateAsync(data);
       setCurrentRequestId(result.id);
+
       toast({
         title: "تم استلام الطلب",
-        description: "بدأنا في معالجة الفيديو الخاص بك",
+        description: `بدأنا في معالجة الفيديو الخاص بك. المدة المتوقعة: ${estimatedTime} ثانية`,
       });
     } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? getVideoErrorMessage(error.message)
+          : "حدث خطأ غير متوقع";
+
       toast({
         variant: "destructive",
         title: "خطأ",
-        description: error instanceof Error ? error.message : "حدث خطأ غير متوقع",
+        description: errorMessage,
       });
+
+      console.error("Video creation error:", error);
     }
   }
 
   const isProcessing = requestStatus?.status === "pending" || requestStatus?.status === "processing";
   const isCompleted = requestStatus?.status === "completed";
   const isFailed = requestStatus?.status === "failed";
+
+  // Memoize form defaults to prevent unnecessary re-renders
+  const formDefaults = useMemo(() => ({
+    surah: 1,
+    startAyah: 1,
+    endAyah: 7,
+    reciter: "Alafasy_128kbps",
+  }), []);
 
   return (
     <div className="min-h-screen pb-20 islamic-pattern">
@@ -106,7 +142,15 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <div className="relative p-6 rounded-2xl bg-secondary/30 border border-secondary text-center">
+            <div cla{/* Information Alert */}
+                    <Alert className="border-primary/20 bg-primary/5">
+                      <Info className="h-4 w-4 text-primary" />
+                      <AlertDescription className="text-sm text-primary">
+                        يمكنك اختيار ما يصل إلى 20 آية في الطلب الواحد
+                      </AlertDescription>
+                    </Alert>
+                    
+                    ssName="relative p-6 rounded-2xl bg-secondary/30 border border-secondary text-center">
               <span className="font-display text-2xl text-secondary-foreground/80 leading-loose">
                 "وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا"
               </span>
@@ -207,11 +251,11 @@ export default function Home() {
 
                     <Button 
                       type="submit" 
-                      className="w-full text-lg h-14 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 shadow-lg shadow-primary/20" 
+                      className="w-full text-lg h-14 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 shadow-lg shadow-primary/20 flex items-center justify-center gap-2" 
                       disabled={generateMutation.isPending || isProcessing}
                     >
-                      {generateMutation.isPending ? "جاري الإرسال..." : "إنشاء الفيديو"}
-                      {!generateMutation.isPending && <Sparkles className="mr-2 h-5 w-5" />}
+                      {!generateMutation.isPending && <Sparkles className="h-5 w-5" />}
+                      <span>{generateMutation.isPending ? "جاري الإرسال..." : "إنشاء الفيديو"}</span>
                     </Button>
 
                   </form>
