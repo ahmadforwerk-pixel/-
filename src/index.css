@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Islamic / Nature Inspired Palette */
+  /* Primary: Deep Emerald Green */
+  --primary: 158 42% 35%;
+  --primary-foreground: 160 60% 98%;
+  --accent: 43 75% 50%;
+  --accent-foreground: 40 40% 10%;
+  --background: 40 30% 98%;
+  --card: 0 0% 100%;
+  --card-border: 158 42% 35% / 0.15;
+  --secondary: 158 20% 95%;
+  --secondary-foreground: 158 42% 20%;
+
+  --radius: 0.75rem;
+
+  --font-sans: 'Tajawal', sans-serif;
+  --font-display: 'Amiri', serif;
+}
+
+.dark {
+  /* Deep Night Mode */
+  --background: 160 40% 5%;
+  --foreground: 40 20% 90%;
+
+  --primary: 158 42% 45%;
+  --primary-foreground: 160 60% 98%;
+
+  --secondary: 160 30% 10%;
+  --secondary-foreground: 40 30% 80%;
+
+  --muted: 160 20% 12%;
+  --muted-foreground: 150 20% 60%;
+
+  --accent: 43 50% 50%;
+  --accent-foreground: 40 40% 10%;
+
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 160 20% 15%;
+  --input: 160 20% 15%;
+  --ring: 158 42% 45%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    direction: rtl;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(var(--primary) / 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(var(--accent) / 0.05) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight text-primary;
+  }
+}
+
+/* Custom Pattern Class */
+.pattern-grid {
+  background-image: radial-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Islamic Geometric Pattern Overlay */
+.islamic-pattern {
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310503f' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
